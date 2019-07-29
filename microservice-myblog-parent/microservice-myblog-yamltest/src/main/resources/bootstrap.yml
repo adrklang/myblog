@@ -1,0 +1,25 @@
+nacos:
+  namespace: 2497bde1-8ae9-46d2-890b-5c06ed98ef2c
+  server-addr: myblog-nacos:8848
+spring:
+  cloud:
+    nacos:
+      discovery:
+        namespace: ${nacos.namespace}
+        server-addr: ${nacos.server-addr}
+        metadata:
+          info:
+            message: 这是测试项目
+      config:
+        file-extension: yml
+        server-addr: ${nacos.server-addr}
+        namespace: ${nacos.namespace}
+        ext-config:
+          - dataId: microservice-common.yml
+            refresh: true
+        shared-dataids: global-common.properties
+        refreshable-dataids: global-common.properties
+  application:
+    name: microservice-myblog-zipkin
+  profiles:
+    active: dev

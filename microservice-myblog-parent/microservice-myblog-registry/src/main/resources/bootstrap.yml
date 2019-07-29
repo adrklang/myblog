@@ -1,0 +1,25 @@
+nacos:
+  namespace: 36143d9f-52c0-4996-ba5f-f91dd600d522
+  server-addr: myblog-nacos:8848
+spring:
+  cloud:
+    nacos:
+      discovery:
+        namespace: ${nacos.namespace}
+        server-addr: ${nacos.server-addr}
+        metadata:
+          info:
+            message: 用户注册服务
+      config:
+        file-extension: yml
+        server-addr: ${nacos.server-addr}
+        namespace: ${nacos.namespace}
+        ext-config:
+          - dataId: microservice-common.yml
+            refresh: true
+        shared-dataids: global-common.properties
+        refreshable-dataids: global-common.properties
+  application:
+    name: microservice-myblog-registry
+  profiles:
+    active: dev

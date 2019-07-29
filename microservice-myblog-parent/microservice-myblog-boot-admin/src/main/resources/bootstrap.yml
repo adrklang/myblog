@@ -1,0 +1,20 @@
+nacos:
+  namespace: 36143d9f-52c0-4996-ba5f-f91dd600d522
+  server-addr: myblog-nacos:8848
+spring:
+  cloud:
+    nacos:
+      discovery:
+        namespace: ${nacos.namespace}
+        server-addr: ${nacos.server-addr}
+        metadata:
+          info:
+            message: 这是SpringBootAdmin监控中心
+      config:
+        file-extension: yml
+        server-addr: ${nacos.server-addr}
+        namespace: ${nacos.namespace}
+        shared-dataids: global-common.properties
+        refreshable-dataids: global-common.properties
+  application:
+    name: microservice-myblog-boot-admin

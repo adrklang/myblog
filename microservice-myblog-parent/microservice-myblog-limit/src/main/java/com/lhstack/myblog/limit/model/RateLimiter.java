@@ -1,4 +1,4 @@
-package com.lhstack.myblog.limit.config;
+package com.lhstack.myblog.limit.model;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

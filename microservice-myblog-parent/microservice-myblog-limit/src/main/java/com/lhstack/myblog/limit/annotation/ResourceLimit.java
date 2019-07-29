@@ -1,5 +1,6 @@
 package com.lhstack.myblog.limit.annotation;
 
+import com.lhstack.myblog.limit.model.LimitType;
 import com.lhstack.myblog.limit.fallback.DefaultFallbackFactory;
 
 import java.lang.annotation.*;
@@ -13,4 +14,5 @@ public @interface ResourceLimit {
     long seconds() default 1;//设定在指定秒内的请求次数
     Class<?> fallbackFactory() default DefaultFallbackFactory.class;
     String method() default "fallback";
+    LimitType type() default LimitType.SESSION;
 }

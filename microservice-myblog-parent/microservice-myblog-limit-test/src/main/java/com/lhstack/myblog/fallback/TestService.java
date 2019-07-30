@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Service
 public class TestService {
 
-    @ResourceLimit(key="message",seconds = 1, capacity = 5,fallbackFactory = FallbackFactory.class,method = "message",type = LimitType.IP,useLimitService = LimitService.JDK,secondsAddCount = 2)
+    @ResourceLimit(key="message",seconds = 1, capacity = 5,fallbackFactory = FallbackFactory.class,method = "message",type = LimitType.IP,useLimitService = LimitService.JDK,secondsAddCount = 5)
     public String ipMessage(String message){
         return "hello " + message;
     }

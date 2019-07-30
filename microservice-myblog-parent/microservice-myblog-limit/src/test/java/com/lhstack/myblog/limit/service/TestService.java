@@ -1,6 +1,7 @@
 package com.lhstack.myblog.limit.service;
 
 import com.lhstack.myblog.limit.annotation.ResourceLimit;
+import com.lhstack.myblog.limit.model.LimitService;
 import com.lhstack.myblog.limit.model.LimitType;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +19,7 @@ public class TestService {
         map.put("age","21");
         return map;
     }
-    @ResourceLimit(key = "helloList", capacity = 10,seconds = 2,type = LimitType.IP,fallbackFactory = FallBackFactory.class,method = "helloList")
+    @ResourceLimit(key="message",seconds = 1, capacity = 5,fallbackFactory = FallBackFactory.class,method = "helloList",type = LimitType.IP,useLimitService = LimitService.JDK,secondsAddCount = 2)
     public List<String> helloList(){
         List<String> list = new LinkedList<>();
         list.add("LH");

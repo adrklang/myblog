@@ -62,20 +62,6 @@ public class JDKRateLimitServiceImpl implements ResourceLimitService {
                 }
             }
         }).start();
-        new Thread(() ->{
-            while(true){
-                try {
-                    Thread.sleep(1000);
-                    Set<Map.Entry<String, JDKLimit>> entries = cache.entrySet();
-                    for(Map.Entry<String, JDKLimit> entry : entries){
-                        JDKLimit value = entry.getValue();
-                        value.offer();
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
     }
 
     @Override
@@ -178,11 +164,18 @@ public class JDKRateLimitServiceImpl implements ResourceLimitService {
     @Data
     @Accessors
     private static class JDKLimit{
+        //令牌补充间隔时间
         private Integer seconds = 1;
+        //修改时间
         private AtomicLong modificationTime = new AtomicLong();
+        //创建时间
         private Long createTime;
+        //每次补充令牌个数
         private Integer secondsAddCount;
+        //以双端队列方式存储令牌
         private Deque<Integer> queue;
+        private Integer capacity;
+        //加锁
         private ReentrantLock lock = new ReentrantLock();
         private JDKLimit(Integer seconds,Integer initCapacity,Integer capacity,Integer secondsAddCount){
             if(capacity < initCapacity){
@@ -191,6 +184,7 @@ public class JDKRateLimitServiceImpl implements ResourceLimitService {
             if(secondsAddCount > capacity){
                 secondsAddCount = capacity;
             }
+            this.capacity = capacity;
             this.secondsAddCount = secondsAddCount;
             queue = new LinkedBlockingDeque<>(capacity);
             modificationTime.set(System.currentTimeMillis());
@@ -201,15 +195,23 @@ public class JDKRateLimitServiceImpl implements ResourceLimitService {
             return new JDKLimit(seconds,initCapacity,capacity,secondsAddCount);
         }
         public synchronized boolean tryAcquire(){
-            Integer poll = queue.poll();
-            return poll != null;
+            try{
+                Integer poll = queue.poll();
+                return poll != null;
+            }finally {
+                boolean offer = this.offer();
+            }
         }
-        public boolean offer(){
+        private boolean offer(){
             long timeMillis = System.currentTimeMillis();
             Long differenceTime = timeMillis - modificationTime.get();
             Long count = differenceTime / 1000 / seconds;
             boolean flag = false;
             count = count * secondsAddCount;
+            long sum = count + queue.size();
+            if(sum > capacity){
+                count = (long)capacity - queue.size();
+            }
             try{
                 lock.lock();
                 if(count > 0){
@@ -235,6 +237,7 @@ public class JDKRateLimitServiceImpl implements ResourceLimitService {
             }
         }
     }
+    //获取request和session
     private static class InnerUtils{
         public static HttpServletRequest getRequest(){
            try{

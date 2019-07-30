@@ -1,23 +1,28 @@
 package com.lhstack.myblog;
 
 import com.lhstack.myblog.fallback.FallbackFactory;
+import com.lhstack.myblog.fallback.TestService;
 import com.lhstack.myblog.limit.annotation.EnableRateLimit;
 import com.lhstack.myblog.limit.annotation.ResourceLimit;
 import com.lhstack.myblog.limit.model.LimitService;
 import com.lhstack.myblog.limit.model.LimitType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @SpringBootApplication
 @EnableRateLimit
 @RestController
-public class MicroserviceMyblogLimitTestApplication {
-
+public class MicroserviceMyblogLimitTestApplication  {
     /**
      * 每5s填充一枚令牌，初始化令牌桶100
      * @return
@@ -27,10 +32,40 @@ public class MicroserviceMyblogLimitTestApplication {
     public String hello(){
         return "Hello World";
     }
+    @Autowired
+    private TestService testService;
+    @PostConstruct
+    public void init(){
+        new Thread(() ->{
+            long timeMillis = System.currentTimeMillis();
+            for(int i = 0;i < 10000;i++){
+                String test = testService.ipMessage("test");
+                System.out.println(test);
+            }
+            System.out.println(System.currentTimeMillis() - timeMillis);
+        }).start();
+        new Thread(() ->{
+            long timeMillis = System.currentTimeMillis();
+            for(int i = 0;i < 10000;i++){
+                String test = testService.ipMessage("test");
+                System.out.println(test);
+            }
+            System.out.println(System.currentTimeMillis() - timeMillis);
+        }).start();
+        new Thread(() ->{
+            long timeMillis = System.currentTimeMillis();
+            for(int i = 0;i < 10000;i++){
+                String test = testService.ipMessage("test1");
+                System.out.println(test);
+            }
+            System.out.println(System.currentTimeMillis() - timeMillis);
+        }).start();
+
+    }
 
     @GetMapping("hello/ip/{message}")
     @ResourceLimit(key="message",seconds = 1, capacity = 5,fallbackFactory = FallbackFactory.class,method = "message",type = LimitType.IP,useLimitService = LimitService.JDK,secondsAddCount = 2)
-    public String ipMessage(@PathVariable("message") String message, HttpServletRequest request){
+    public String ipMessage(@PathVariable("message") String message){
         return "hello " + message;
     }
     @GetMapping("hello/session/{message}")

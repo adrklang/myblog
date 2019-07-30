@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.sql.SQLOutput;
 import java.util.List;
 import java.util.Map;
 
@@ -21,10 +22,12 @@ public class MicroserviceMyblogApplicationTest {
     private TestService testService;
     @Test
     public void testHelloLimit() throws InterruptedException {
-        for(int i = 0;i < 100;i++){
+        long timeMillis = System.currentTimeMillis();
+        for(int i = 0;i < 10000;i++){
             List<String> strings = testService.helloList();
             System.out.println(strings);
         }
+        System.out.println(System.currentTimeMillis() - timeMillis);
     }
     @Test
     public void testMapLimit() throws InterruptedException {

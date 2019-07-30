@@ -17,7 +17,8 @@ public class RateLimiter {
     }
 
     public static RateLimiter create(long count, long seconds, TimeUnit seconds1) {
-        return new RateLimiter(System.currentTimeMillis(),com.google.common.util.concurrent.RateLimiter.create(count,seconds,seconds1));
+        com.google.common.util.concurrent.RateLimiter gRateLimiter = com.google.common.util.concurrent.RateLimiter.create(count, seconds, seconds1);
+        return new RateLimiter(System.currentTimeMillis(),gRateLimiter);
     }
 
     public Boolean tryAcquire(){

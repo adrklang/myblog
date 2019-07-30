@@ -11,14 +11,14 @@ import java.util.Map;
 
 @Component
 public class TestService {
-    @ResourceLimit(key = "helloMap",count = 20,seconds = 5,fallbackFactory = FallBackFactory.class,method = "helloMap")
+    @ResourceLimit(key = "helloMap", capacity = 20,seconds = 5,fallbackFactory = FallBackFactory.class,method = "helloMap")
     public Map<String,String> helloMap(){
         Map<String,String> map = new HashMap<>();
         map.put("author","LH");
         map.put("age","21");
         return map;
     }
-    @ResourceLimit(key = "helloList",count = 10,seconds = 2,type = LimitType.IP,fallbackFactory = FallBackFactory.class,method = "helloList")
+    @ResourceLimit(key = "helloList", capacity = 10,seconds = 2,type = LimitType.IP,fallbackFactory = FallBackFactory.class,method = "helloList")
     public List<String> helloList(){
         List<String> list = new LinkedList<>();
         list.add("LH");

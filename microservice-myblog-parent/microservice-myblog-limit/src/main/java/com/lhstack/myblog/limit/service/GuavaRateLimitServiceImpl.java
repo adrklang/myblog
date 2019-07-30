@@ -23,10 +23,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class RateLimitServiceImpl implements ResourceLimitService{
+public class GuavaRateLimitServiceImpl implements ResourceLimitService{
     @Autowired(required = false)
     private HttpSession session;
-    private static Logger logger = LoggerFactory.getLogger(RateLimitServiceImpl.class);
+    private static Logger logger = LoggerFactory.getLogger(GuavaRateLimitServiceImpl.class);
     private static ReentrantReadWriteLock reentrantLock = new ReentrantReadWriteLock();
     private static ConcurrentHashMap<String,RateLimiter> concurrentHashMap = new ConcurrentHashMap<>();
     private static ReentrantLock writeLock = new ReentrantLock();
@@ -46,7 +46,7 @@ public class RateLimitServiceImpl implements ResourceLimitService{
                             try{
                                 writeLock.lock();
                                 concurrentHashMap.remove(key);
-                                logger.info("限流对象超时，已删除:" + key);
+                                logger.info("Rate --- 限流对象超时，已删除:" + key);
                             }finally {
                                 writeLock.unlock();
                             }
@@ -79,12 +79,12 @@ public class RateLimitServiceImpl implements ResourceLimitService{
     }
     private void sessionLimit(ResourceLimit resourceLimit){
         String key = getSessionKey(resourceLimit);
-        long count = resourceLimit.count();
+        long initCapacity = resourceLimit.initCapacity();
         long seconds = resourceLimit.seconds();
         if(!concurrentHashMap.containsKey(key)){
             synchronized (ResourceLimitAutoConfiguration.class){
                 if(!concurrentHashMap.containsKey(key)){
-                    RateLimiter rateLimiter = RateLimiter.create(count, seconds, TimeUnit.SECONDS);
+                    RateLimiter rateLimiter = RateLimiter.create(initCapacity, seconds, TimeUnit.SECONDS);
                     concurrentHashMap.put(key,rateLimiter);
                     logger.info("初始化RateLimiter -- {},type --- sessionLimit, key -- {}",rateLimiter,key);
                 }
@@ -113,18 +113,52 @@ public class RateLimitServiceImpl implements ResourceLimitService{
         switch (resourceLimit.type()){
             case SESSION: return proceedingSessionRateLimit(resourceLimit);
             case IP:return proceedingIpRateLimit(resourceLimit);
+            case NONE:return proceedingNoneRateLimit(resourceLimit);
+            default:;
         }
         return false;
     }
+
+    private boolean proceedingNoneRateLimit(ResourceLimit resourceLimit) {
+        String key = resourceLimit.key();
+        try{
+            reentrantLock.writeLock().lock();
+            RateLimiter rateLimiter = concurrentHashMap.get(key);
+            if(rateLimiter.tryAcquire()){
+                return true;
+            }
+            return false;
+        }finally {
+            reentrantLock.writeLock().unlock();
+        }
+    }
+
     @Override
     public Boolean isExist(ResourceLimit resourceLimit){
         LimitType type = resourceLimit.type();
         switch (type){
             case SESSION: sessionLimit(resourceLimit);break;
             case IP: ipLimit(resourceLimit);break;
+            case NONE: noneLimit(resourceLimit);break;
+            default:;
         }
 
         return true;
+    }
+
+    private void noneLimit(ResourceLimit resourceLimit) {
+        long initCapacity = resourceLimit.initCapacity();
+        long seconds = resourceLimit.seconds();
+        String key = resourceLimit.key();
+        if(!concurrentHashMap.containsKey(key)){
+            synchronized (ResourceLimitAutoConfiguration.class){
+                if(!concurrentHashMap.containsKey(key)){
+                    RateLimiter rateLimiter = RateLimiter.create(initCapacity, seconds, TimeUnit.SECONDS);
+                    concurrentHashMap.put(key,rateLimiter);
+                    logger.info("初始化RateLimiter -- {},type --- ipLimit,key -- {}",rateLimiter,key);
+                }
+            }
+        }
     }
 
     private HttpServletRequest getRequest(){
@@ -144,12 +178,12 @@ public class RateLimitServiceImpl implements ResourceLimitService{
         }else{
             key = "IpNone" + ":" + resourceLimit.key();
         }
-        long count = resourceLimit.count();
+        long initCapacity = resourceLimit.initCapacity();
         long seconds = resourceLimit.seconds();
         if(!concurrentHashMap.containsKey(key)){
             synchronized (ResourceLimitAutoConfiguration.class){
                 if(!concurrentHashMap.containsKey(key)){
-                    RateLimiter rateLimiter = RateLimiter.create(count, seconds, TimeUnit.SECONDS);
+                    RateLimiter rateLimiter = RateLimiter.create(initCapacity, seconds, TimeUnit.SECONDS);
                     concurrentHashMap.put(key,rateLimiter);
                     logger.info("初始化RateLimiter -- {},type --- ipLimit,key -- {}",rateLimiter,key);
                 }

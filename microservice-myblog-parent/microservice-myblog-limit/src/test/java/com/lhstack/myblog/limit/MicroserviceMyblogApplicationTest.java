@@ -22,15 +22,14 @@ public class MicroserviceMyblogApplicationTest {
     @Test
     public void testHelloLimit() throws InterruptedException {
         for(int i = 0;i < 100;i++){
-            Thread.sleep(100);
             List<String> strings = testService.helloList();
             System.out.println(strings);
         }
     }
     @Test
-    public void testMapimit() throws InterruptedException {
+    public void testMapLimit() throws InterruptedException {
         for(int i = 0;i < 100;i++){
-            Thread.sleep(100);
+            Thread.sleep(10);
             Map<String, String> stringStringMap = testService.helloMap();
             System.out.println(stringStringMap);
         }

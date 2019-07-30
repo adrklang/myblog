@@ -1,5 +1,6 @@
 package com.lhstack.myblog.limit.annotation;
 
+import com.lhstack.myblog.limit.model.LimitService;
 import com.lhstack.myblog.limit.model.LimitType;
 import com.lhstack.myblog.limit.fallback.DefaultFallbackFactory;
 
@@ -9,10 +10,14 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface ResourceLimit {
-    long count() default 5;//seconds秒内请求次数
-    String key();
-    long seconds() default 1;//设定在指定秒内的请求次数
+    int capacity() default 15;//最大容量，只适用于JDKRateLimitService
+    int initCapacity() default 10; //初始化容量，必须比capacity小，不然使用capacity的值
+    String key();//限流key
+    int seconds() default 1;//seconds秒补充一个令牌
     Class<?> fallbackFactory() default DefaultFallbackFactory.class;
     String method() default "fallback";
-    LimitType type() default LimitType.SESSION;
+    LimitType type() default LimitType.SESSION;//NONE 对所有用户生效,SESSION基于SESSIONID限流,IP基于IP
+    LimitService useLimitService() default LimitService.RATE;//默认使用GuavaRateLimitService,
+    String limitServiceBeanName() default "";//如果LimitService设置为CONSUMER,那么此属性生效,此属性为容器里面实现了ResourceLimitService接口的beanname,用户如果要自定义限流规则，使用此属性即可
+    int secondsAddCount() default 1;//每秒添加多少个令牌，此属性必须必capacity小，只适用于JDKRateLimitService
 }
